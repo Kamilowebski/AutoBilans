@@ -1,0 +1,4 @@
+<data-extraction-rules>
+    <cloud-backup><include domain="sharedpref" path="autobilans.xml"/></cloud-backup>
+    <device-transfer><include domain="sharedpref" path="autobilans.xml"/></device-transfer>
+</data-extraction-rules>

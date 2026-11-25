@@ -1,0 +1,7 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="240dp" android:minHeight="112dp"
+    android:targetCellWidth="4" android:targetCellHeight="2"
+    android:initialLayout="@layout/dashboard_widget"
+    android:previewLayout="@layout/dashboard_widget"
+    android:resizeMode="horizontal"
+    android:updatePeriodMillis="3600000" android:widgetCategory="home_screen"/>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101317">
+<meta name="description" content="AutoBilans – wydatki, terminy i statystyki Twoich samochodów.">
+<link rel="stylesheet" href="style.css">
+<script defer src="app.js"></script>
+<title>AutoBilans</title>
+</head>
+<body>
+<aside class="side">
+<a class="brand" href="#start"><span class="logo" data-icon="car"></span><span>Auto<span>Bilans</span></span></a>
+<p class="nav-label">PANEL KIEROWCY</p>
+<nav aria-label="Nawigacja">
+<a href="#start"><i data-icon="home"></i>Przegląd</a>
+<a class="nav-wide" href="#cars"><i data-icon="car"></i>Garaż</a>
+<a href="#expenses"><i data-icon="wallet"></i>Wydatki</a>
+<a href="#dates"><i data-icon="calendar"></i>Terminy</a>
+<a class="nav-wide" href="#cards"><i data-icon="card"></i>Karty</a>
+<a class="nav-wide" href="#stats"><i data-icon="chart"></i>Statystyki</a>
+<a class="nav-more" href="#more"><i data-icon="more"></i>Więcej</a>
+</nav>
+<div class="local"><i data-icon="lock"></i><span>Dane zapisane lokalnie<br><small>Na tym urządzeniu</small></span></div>
+</aside>
+<div class="shell">
+<header><a class="brand mobile" href="#start"><span class="logo" data-icon="car"></span>AutoBilans</a><div class="breadcrumb">Panel kierowcy <span>/</span> <strong id="crumb"></strong></div><div class="header-actions"><div id="picker"></div><a class="settings-link" id="settings-link" href="#settings" aria-label="Ustawienia" title="Ustawienia"><i data-icon="settings"></i></a></div></header>
+<main id="page"></main>
+</div>
+<dialog id="dialog"><form id="form"></form></dialog>
+<div id="toast" role="status"></div>
+</body>
+</html>
