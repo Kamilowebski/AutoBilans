@@ -1,0 +1,78 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'Kamilowebski/AutoBilans'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+          curl --fail --silent --show-error --location --retry 3 \
+            'https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.3/core-3.5.3.jar' \
+            --output "$RUNNER_TEMP/zxing.jar"
+          curl --fail --silent --show-error --location --retry 3 \
+            'https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.9.35/r8-8.9.35.jar' \
+            --output "$RUNNER_TEMP/r8.jar"
+          cd "$RUNNER_TEMP"
+          sha256sum --check <<'CHECKSUMS'
+          8d8064c1636fdaef7189dd9055c7d59950a8940a12f2293956446ec3c109fd82  zxing.jar
+          204b2fc2b0f4e888dc0ef748b58090def1bf4185068d36abbb94841dbc7107a8  r8.jar
+          CHECKSUMS
+
+      - name: Build and verify signed APK
+        shell: bash
+        env:
+          AUTOBILANS_KEYSTORE_BASE64: ${{ secrets.AUTOBILANS_KEYSTORE_BASE64 }}
+          AUTOBILANS_KEYSTORE_PASSWORD: ${{ secrets.AUTOBILANS_KEYSTORE_PASSWORD }}
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected a release tag such as v1.0.1."
+            exit 1
+          fi
+          : "${AUTOBILANS_KEYSTORE_BASE64:?Missing signing keystore secret}"
+          : "${AUTOBILANS_KEYSTORE_PASSWORD:?Missing signing password secret}"
+          umask 077
+          SIGNING_KEYSTORE="$(mktemp "$RUNNER_TEMP/autobilans-XXXXXX.p12")"
+          trap 'rm -f "$SIGNING_KEYSTORE"' EXIT
+          printf '%s' "$AUTOBILANS_KEYSTORE_BASE64" | base64 --decode > "$SIGNING_KEYSTORE"
+          unset AUTOBILANS_KEYSTORE_BASE64
+          export SIGNING_KEYSTORE
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export ANDROID_JAR="$ANDROID_HOME/platforms/android-35/android.jar"
+          export BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          export ZXING_JAR="$RUNNER_TEMP/zxing.jar"
+          export R8_JAR="$RUNNER_TEMP/r8.jar"
+          apk="$RUNNER_TEMP/AutoBilans-$GITHUB_REF_NAME.apk"
+          ./build.sh "$apk"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$apk" | grep -Fx \
+            'Signer #1 certificate SHA-256 digest: 22c40bda4f0059708cb7fbe9e69db9b64c168be7052d4648cd94df08604dc575'
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk="$RUNNER_TEMP/AutoBilans-$GITHUB_REF_NAME.apk"
+          gh release create "$GITHUB_REF_NAME" "$apk" --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --title "AutoBilans $GITHUB_REF_NAME" --generate-notes

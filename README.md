@@ -19,6 +19,17 @@ Pobierz podpisany APK z sekcji **Releases** i otwórz plik na telefonie. Przy ak
 
 Do aktualizacji potrzebujesz tego samego klucza, którym podpisano zainstalowaną wersję. Trzymaj magazyn klucza i hasło poza repozytorium.
 
+## Automatyczne wydania
+
+GitHub Actions buduje i podpisuje APK oraz publikuje je w **Releases** po wysłaniu zatwierdzonego tagu, np. `v1.0.1`. Zwykły push na gałąź nie uruchamia wydania.
+
+Do automatycznego podpisu repozytorium potrzebuje dwóch sekretów w **Settings → Secrets and variables → Actions**:
+
+- `AUTOBILANS_KEYSTORE_BASE64` — oryginalny magazyn podpisu zakodowany w Base64.
+- `AUTOBILANS_KEYSTORE_PASSWORD` — hasło magazynu.
+
+Workflow sprawdza podpis przed publikacją. Tag wydania w GitHubie i numer wersji Androida w `AndroidManifest.xml` są niezależne. Przed wydaniem zmian aplikacji zwiększ `versionCode`, aby Android zaakceptował APK jako aktualizację.
+
 ## Licencja i źródła danych
 
 Kod AutoBilansu jest dostępny na licencji [MIT](LICENSE).

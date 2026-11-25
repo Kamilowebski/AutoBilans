@@ -22,5 +22,9 @@ fi
 "${d8[@]}" --min-api 26 --lib "$ANDROID_JAR" --output "$build/dex" "$build/classes.jar" "$ZXING_JAR"
 (cd "$build/dex" && zip -q -0 "$build/base.apk" classes.dex)
 "$BUILD_TOOLS/zipalign" -f 4 "$build/base.apk" "$build/aligned.apk"
-"$BUILD_TOOLS/apksigner" sign --v4-signing-enabled false --ks "$SIGNING_KEYSTORE" --out "${1:-AutoBilans.apk}" "$build/aligned.apk"
+password_args=()
+if [[ -n "${AUTOBILANS_KEYSTORE_PASSWORD:-}" ]]; then
+    password_args=(--ks-pass env:AUTOBILANS_KEYSTORE_PASSWORD)
+fi
+"$BUILD_TOOLS/apksigner" sign --v4-signing-enabled false --ks "$SIGNING_KEYSTORE" "${password_args[@]}" --out "${1:-AutoBilans.apk}" "$build/aligned.apk"
 "$BUILD_TOOLS/apksigner" verify --verbose "${1:-AutoBilans.apk}"
