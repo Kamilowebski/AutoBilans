@@ -1,5 +1,6 @@
 'use strict';
 const paths = {
+  close:'<path d="m6 6 12 12M18 6 6 18"/>',
   card:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-14 5h4"/>',
   more:'<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
   settings:'<path d="m10 2-.6 2.5-1.9 1-2.4-.8-2 3.5 1.8 1.8v2l-1.8 1.8 2 3.5 2.4-.8 1.9 1 .6 2.5h4l.6-2.5 1.9-1 2.4.8 2-3.5-1.8-1.8v-2l1.8-1.8-2-3.5-2.4.8-1.9-1L14 2z" transform="translate(0 1)"/><circle cx="12" cy="12" r="3"/>',
@@ -128,21 +129,27 @@ function deadlineRows(car, detailed=false) {
 }
 function expenseRows(items,editable=false) {
   if (!items.length) return '<p class="empty">Brak zapisanych wydatków.</p>';
-  return items.map(item => `<div class="row"><div class="row-main">${badge(item.category==='Paliwo'?'fuel':'wallet')}<div><h3>${esc(item.note || item.category)}</h3><div class="sub">${dateLabel(item.date)}${item.note?' · '+esc(item.category):''}${item.workshop?' · '+esc(item.workshop):''}${item.station?' · '+esc(item.station):''}</div></div></div><div class="actions"><span class="amount">${money(item.cents)}</span>${editable?`<button class="quiet" data-action="expense:${item.id}">Edytuj</button>`:''}</div></div>`).join('');
+  return items.map(item => `<div class="row expense-row"><div class="row-main">${badge(item.category==='Paliwo'?'fuel':'wallet')}<div><h3>${esc(item.note || item.category)}</h3><div class="sub">${dateLabel(item.date)}${item.note?' · '+esc(item.category):''}${item.workshop?' · '+esc(item.workshop):''}${item.station?' · '+esc(item.station):''}</div></div></div><div class="actions"><span class="amount">${money(item.cents)}</span>${editable?`<button class="quiet" data-action="expense:${item.id}">Edytuj</button>`:''}</div></div>`).join('');
 }
 function home(car) {
-  const metrics = Object.entries(types).map(([key,type]) => {
-    const date = car?.[key];
-    const [label,tone] = status(date);
-    return `<article class="card"><div class="card-title">${badge(type.icon,type.color)}<span class="sub">${type.name}</span></div><div class="metric">${date ? dateLabel(date) : '—'}</div><div class="sub ${tone}">${date ? label : 'Brak terminu'}</div></article>`;
-  }).join('');
-  return heading('Przegląd','Wydatki i terminy Twojego samochodu.',car ? button('expense','Dodaj wydatek','plus') : '')+
-    `<section class="hero"><div class="hero-copy"><div class="eyebrow">${icon('car')} GARAŻ</div><h2>${car ? esc(car.name) : 'Twój pierwszy samochód'}</h2><p>${car ? esc(carLabel(car)) : 'Dodaj auto, aby zacząć zapisywać wydatki.'}</p>${car ? '<a class="button secondary" href="#cars">Zarządzaj garażem</a>' : button('car','Dodaj samochód','plus')}</div><div class="hero-art" aria-hidden="true">${icon('car')}</div></section>
-    <section class="cards"><article class="card"><div class="card-title">${badge('wallet')}<span class="sub">Wydatki w tym miesiącu</span></div><div class="metric">${money(total(monthItems()))}</div><div class="sub">${new Date().toLocaleDateString('pl-PL',{month:'long',year:'numeric'})}</div></article>${metrics}</section>
-    <div class="split"><section class="card"><div class="card-title"><h2>Wydatki w czasie</h2><a class="quiet" href="#stats">Statystyki</a></div>${chart()}</section><section class="card"><div class="card-title"><h2>Terminy</h2><a class="quiet" href="#dates">Zobacz terminy</a></div>${deadlineRows(car)}</section></div>
-    ${cardShortcut()}
-    ${fuelShortcut()}
-    <section class="card spaced"><div class="card-title"><h2>Ostatnie wydatki</h2><a class="quiet" href="#expenses">Zobacz wydatki</a></div>${expenseRows(expenses().slice(0,4))}</section>`;
+  if (!car) return `<div class="heading"><h1>Przegląd</h1></div>
+    <section class="hero">
+      <div class="hero-head">${badge('car')}<div><h2>Twój pierwszy samochód</h2><p class="sub">Dodaj auto, aby zacząć zapisywać wydatki.</p></div></div>
+      <div class="actions">${button('car','Dodaj samochód','plus')}</div>
+    </section>`;
+  const month = new Date().toLocaleDateString('pl-PL',{month:'long',year:'numeric'});
+  return `<div class="heading"><h1>Przegląd</h1></div>
+    <section class="hero">
+      <div class="hero-head">${badge('car')}<div><h2>${esc(car.name)}</h2><p class="sub">${esc(carLabel(car))}</p></div><a class="quiet" href="#cars">Garaż</a></div>
+      <div class="hero-total"><p>Wydatki · ${month}</p><strong>${money(total(monthItems()))}</strong></div>
+      <div class="actions">${button('tank','Tankowanie','fuel')}${button('expense','Dodaj wydatek','plus',true)}</div>
+    </section>
+    <div class="home-grid">
+      <section class="card"><div class="card-title"><h2>Wydatki w czasie</h2><a class="quiet" href="#stats">Statystyki</a></div>${chart()}</section>
+      <section class="card"><div class="card-title"><h2>Terminy</h2><a class="quiet" href="#dates">Zobacz wszystkie</a></div>${deadlineRows(car)}</section>
+    </div>
+    <section class="card home-ledger spaced"><div class="card-title"><h2>Ostatnie wydatki</h2><a class="quiet" href="#expenses">Historia</a></div>${expenseRows(expenses().slice(0,4))}</section>
+    <div class="home-utilities">${cardShortcut()}${fuelShortcut()}</div>`;
 }
 function garage() {
   return heading('Garaż','Dodawaj samochody i wybieraj aktywne auto.',button('car','Dodaj samochód','plus'))+
@@ -239,10 +246,12 @@ function showCard(id) {
   if (!item) return;
   const code = item.format === 'TEXT' ? '' : native.cardCode(item.format,item.value);
   $('form').onsubmit = null;
-  $('form').innerHTML = `<h2>${esc(cardName(item))}</h2>
-    ${code ? `<div class="scan-card ${item.format==='QR_CODE'?'qr':''}"><img src="data:image/png;base64,${code}" alt="${formats[item.format]} do zeskanowania"></div>` : ''}
-    <p class="card-number">${esc(item.value)}</p>
-    <button class="button secondary" type="button" data-close>Zamknij</button>`;
+  $('form').innerHTML = `
+    <div class="form-head"><h2 id="dialog-title">${esc(cardName(item))}</h2><button class="icon-button" type="button" aria-label="Zamknij" data-close>${icon('close')}</button></div>
+    <div class="form-body">
+      ${code ? `<div class="scan-card ${item.format==='QR_CODE'?'qr':''}"><img src="data:image/png;base64,${code}" alt="${formats[item.format]} do zeskanowania"></div>` : ''}
+      <p class="card-number">${esc(item.value)}</p>
+    </div>`;
   $('form').querySelector('[data-close]').onclick = () => $('dialog').close();
   $('dialog').showModal();
 }
@@ -344,7 +353,7 @@ function render() {
   const pages = {
     start:() => home(car),
     cars:garage,
-    expenses:() => heading('Wydatki','Historia kosztów wybranego samochodu.',car?button('expense','Dodaj wydatek','plus'):'')+(car?`<section class="card">${expenseRows(expenses(),true)}</section>`:noCar()),
+    expenses:() => heading('Wydatki','Historia kosztów wybranego samochodu.',car?button('expense','Dodaj wydatek','plus'):'')+(car?`<section class="card list-panel">${expenseRows(expenses(),true)}</section>`:noCar()),
     dates:() => heading('Terminy','Przegląd, koniec OC i terminy serwisowe.') +
       (car ? `<section class="card">${deadlineRows(car,true)}</section>${serviceSection(car)}` : noCar()) +
       '<p class="spaced"><a class="quiet" href="#settings">Ustawienia powiadomień</a></p>',
@@ -358,7 +367,10 @@ function render() {
   if (route === 'settings') window.refreshReminderStatus();
 }
 function openForm(title,fields,submit,remove) {
-  $('form').innerHTML = `<h2>${title}</h2>${fields}<p class="form-error" role="alert" hidden></p><div class="actions"><button class="button" type="submit">Zapisz</button><button class="button secondary" type="button" data-close>Anuluj</button>${remove?'<button class="quiet danger" type="button" data-remove>Usuń</button>':''}</div>`;
+  $('form').innerHTML = `
+    <div class="form-head"><h2 id="dialog-title">${title}</h2><button class="icon-button" type="button" aria-label="Anuluj" data-close>${icon('close')}</button></div>
+    <div class="form-body">${fields}<p class="form-error" role="alert" hidden></p></div>
+    <div class="form-foot">${remove?'<button class="quiet danger" type="button" data-remove>Usuń</button>':''}<button class="button" type="submit">Zapisz</button></div>`;
   $('form').querySelector('[data-close]').onclick = () => $('dialog').close();
   if (remove) $('form').querySelector('[data-remove]').onclick = () => {
     if (!confirm('Czy na pewno usunąć ten wpis?')) return;
@@ -380,6 +392,7 @@ function openForm(title,fields,submit,remove) {
       const field = $('form').querySelector('.form-error');
       field.hidden = false;
       field.textContent = error instanceof TypeError || error instanceof DOMException ? 'Nie udało się zapisać danych.' : error.message;
+      field.scrollIntoView({block:'nearest'});
     }
   };
   $('dialog').showModal();
@@ -412,15 +425,15 @@ function expenseForm(id,tank=false) {
   const workshops = [...new Set(data.expenses.filter(entry => entry.category === 'Serwis' && entry.workshop)
     .map(entry => entry.workshop))].sort((a,b) => a.localeCompare(b,'pl'));
   openForm(item?'Edytuj wydatek':tank?'Dodaj tankowanie':'Dodaj wydatek',
-    input('Kwota (zł)','amount',item?String(item.cents/100).replace('.',','):'','required inputmode="decimal" maxlength="12" placeholder="0,00"')+
-    `<label>Kategoria<select name="category" id="expense-category">${categories.map(category => `<option ${item?.category===category?'selected':''}>${category}</option>`).join('')}</select></label>`+
+    '<div class="form-pair">'+input('Kwota (zł)','amount',item?String(item.cents/100).replace('.',','):'','required inputmode="decimal" maxlength="12" placeholder="0,00"')+
+    `<label>Kategoria<select name="category" id="expense-category">${categories.map(category => `<option ${item?.category===category?'selected':''}>${category}</option>`).join('')}</select></label></div>`+
     input('Data wydatku','date',item?.date ?? today(),'type="date" required')+
     input('Opis (opcjonalnie)','note',item?.note,'maxlength="120"')+
     `<fieldset id="tank-fields"><legend>Tankowanie</legend>
     <label>Paliwo<select name="fuel"><option value="">Wybierz paliwo</option>${fuels.map(fuel => `<option ${(item?.fuel || car.fuel)===fuel?'selected':''}>${fuel}</option>`).join('')}</select></label>
     <p class="sub">Wpisz dwie wartości: kwotę, litry lub cenę za litr. Trzecia wyliczy się automatycznie.</p>
-    ${input('Litry','liters',item?.liters,'inputmode="decimal" maxlength="8" placeholder="np. 42,50"')}
-    ${input('Cena za litr (zł)','unitPrice',item?.liters ? (item.cents/(100*item.liters)).toFixed(3).replace('.',',') : '', 'inputmode="decimal" maxlength="8" placeholder="np. 6,59"')}
+    <div class="form-pair">${input('Litry','liters',item?.liters,'inputmode="decimal" maxlength="8" placeholder="np. 42,50"')}
+    ${input('Cena za litr (zł)','unitPrice',item?.liters ? (item.cents/(100*item.liters)).toFixed(3).replace('.',',') : '', 'inputmode="decimal" maxlength="8" placeholder="np. 6,59"')}</div>
     ${input('Przebieg (km)','odometer',item?.odometer,'type="number" min="0" max="9999999"')}
     ${input('Stacja (opcjonalnie)','station',item?.station,'maxlength="80" placeholder="np. ORLEN, Warszawa"')}
     <button class="button secondary" type="button" id="station-gps">Znajdź stację z GPS</button>

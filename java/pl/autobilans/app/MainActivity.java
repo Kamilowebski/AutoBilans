@@ -51,13 +51,13 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(0xff101317);
-        getWindow().setNavigationBarColor(0xff13171c);
+        getWindow().setStatusBarColor(0xff101311);
+        getWindow().setNavigationBarColor(0xff161c17);
         fuelStations = new FuelStations(getSystemService(LocationManager.class));
         records = getSharedPreferences("autobilans", MODE_PRIVATE);
         pendingScreen = screenFor(getIntent().getAction());
         web = new WebView(this);
-        web.setBackgroundColor(0xff101317);
+        web.setBackgroundColor(0xff101311);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
         web.setWebChromeClient(new android.webkit.WebChromeClient());
